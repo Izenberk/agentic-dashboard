@@ -1,0 +1,120 @@
+﻿📄 Project Blueprint: The Agentic Dashboard
+📄 Project Blueprint: The Agentic Dashboard
+1. Executive Summary
+Project Name: Agentic Dashboard Role: Mission Control for Automation Objective: To build a high-performance, self-hosted dashboard that visualizes, triggers, and logs n8n automation workflows. This project serves as a technical portfolio piece demonstrating mastery of modern, high-efficiency JavaScript runtimes and full-stack architecture.
+2. The Tech Stack ("The Ferrari Build")
+We are prioritizing Developer Experience (DX), Runtime Performance, and Type Safety.
+* Runtime: Bun 🥟
+   * Why: Replaces Node.js for instant startup times, fast package installation, and native TypeScript support. Aligns with future trends (Anthropic acquisition).
+* Backend ("The Brain"): ElysiaJS 🦊
+   * Why: High-performance framework built specifically for Bun. Provides end-to-end type safety via the "Eden Treaty."
+* Frontend ("The Face"): React + Vite ⚡
+   * Why: Chosen for stability and speed. Delivers a fast Single Page Application (SPA) experience without the complexity of Server-Side Rendering (SSR) found in Next.js.
+* Database ("The Memory"): Turso (libSQL) 💽
+   * Why: Distributed, serverless SQLite. Low latency, edge-ready, and capable of being treated like a local file during development.
+* Styling: Tailwind CSS 🎨
+   * Why: Rapid UI development with utility-first classes.
+________________
+3. System Architecture
+We will use a Monorepo structure managed by Bun Workspaces.
+Directory Structure:
+Plaintext
+/agentic-dashboard
+├── package.json          (Workspace Root Configuration)
+├── /server               (The API)
+│   ├── src/index.ts      (Elysia Application Entry)
+│   └── src/db.ts         (Turso Connection)
+└── /client               (The UI)
+    ├── src/App.tsx       (React Entry)
+    └── src/lib/api.ts    (Eden Treaty Client)
+
+
+Data Flow:
+1. Ingest: n8n Workflow completes -> Sends HTTP POST Webhook -> Elysia API.
+2. Process: Elysia validates payload -> Writes to Turso Database.
+3. Visualise: React Frontend fetches updates via Eden Client -> Displays status/logs to user.
+4. Implementation Phases
+Phase 1: The Foundation (Local Lab) 🧪
+* Set up Bun Monorepo structure.
+* Initialize Elysia Backend and React Frontend.
+* Establish the "Handshake" (Eden Treaty) so Frontend sees Backend types.
+* Connect Turso Database and verify read/write operations.
+Phase 2: The Core Logic 🧠
+* Design the Database Schema (Workflows, Runs, Logs).
+* Create API endpoints for n8n to push data (POST /api/webhook).
+* Create API endpoints for Frontend to read data (GET /api/runs).
+Phase 3: The UI Implementation 🎨
+* Build the Dashboard Layout (Sidebar, Stats Cards, Data Table).
+* Implement real-time fetching or polling for new automation runs.
+* Add "Trigger" buttons to manually start n8n workflows from the UI.
+
+
+Phase 4: Deployment (The Fortress) 🏰
+* Environment: Self-Hosted Linux VPS (DigitalOcean/Hetzner).
+* Strategy: Docker Compose.
+   * Container A: agent-api (Bun)
+   * Container B: agent-web (Nginx serving static Vite build)
+   * Container C: Reverse Proxy (Caddy/Nginx) handling SSL.
+
+
+🐧 Infrastructure Agentic Architect
+🐧 Infrastructure Blueprint: The "Agentic Architect" Path
+Project: Bun + Elysia Agentic Dashboard & Self-Hosted n8n Goal: Move from "Localhost" to a production-grade, self-hosted Linux environment. Strategy: Manual deployment first (to learn the OS), then Containerized orchestration (to master DevOps).
+________________
+
+
+🏗️ Phase 2: The "Server Architect" (Bare Metal Deployment)
+Objective: Deploy the Bun + Elysia API directly onto a Linux VPS using system services. Why: To understand how Linux manages long-running processes, permissions, and security before abstracting it away with Docker.
+Step 2.1: VPS Provisioning & Hardening
+* Action: Spin up a fresh Ubuntu 22.04/24.04 VPS (DigitalOcean Droplet or Hetzner Cloud).
+* Security Protocol:
+   * User Management: Create a non-root user (bb-admin) with sudo privileges.
+   * SSH Lockdown: Generate SSH keys locally. Disable password login in /etc/ssh/sshd_config.
+   * Firewall (UFW): explicit deny all incoming. Allow only:
+      * 22/tcp (SSH)
+      * 80/tcp (HTTP)
+      * 443/tcp (HTTPS)
+Step 2.2: The "Naked" Deployment
+* Environment Setup: Install unzip, git, and bun (via curl) on the server.
+* Codebase: Clone the Agentic Dashboard repo to /var/www/agent-dashboard.
+* Env Variables: Create a production .env file on the server (do not commit this to Git!).
+Step 2.3: Process Management (Systemd)
+* Action: Create a Systemd service file at /etc/systemd/system/bun-agent.service.
+* Configuration:
+   * ExecStart=/home/bb-admin/.bun/bin/bun run src/index.ts
+   * Restart=always (Auto-heal if it crashes)
+   * User=bb-admin (Never run apps as root!)
+* Execution: Enable the service to start on boot: sudo systemctl enable bun-agent.
+________________
+
+
+🐳 Phase 3: The "Container Commander" (Orchestration)
+Objective: Dockerize the Bun app and deploy it alongside a self-hosted n8n instance using Docker Compose and a Reverse Proxy. Why: To create a portable, reproducible environment where our API and Workflow Automation tool live on the same internal network.
+Step 3.1: Containerizing the Dashboard
+* Action: Create a Dockerfile for the Bun/Elysia app.
+* Optimization: Use multi-stage builds to keep the image small (Build Stage -> Production Stage).
+* Test: Build and run the container locally first to ensure port mapping works.
+Step 3.2: The Grand Orchestration (Docker Compose)
+* Action: Create docker-compose.yml on the VPS.
+* Services Defined:
+   1. agent-api: Your Bun application.
+   2. n8n: The workflow automation engine.
+   3. postgres: Database for n8n data.
+   4. redis: (Optional) For caching or queue management if we scale.
+* Networking: Create a custom bridge network (agent-net) so agent-api can talk to n8n securely via internal DNS (e.g., http://n8n:5678) without exposing ports to the public.
+Step 3.3: Traffic Control (Reverse Proxy)
+* Tool: Caddy (Recommended for simplicity) or Nginx.
+* Action: Add Caddy as a service in Docker Compose.
+* Configuration (Caddyfile):
+   * Route dashboard.yourdomain.com → agent-api:3000
+   * Route workflows.yourdomain.com → n8n:5678
+* SSL: Caddy automatically provisions and renews Let's Encrypt SSL certificates (HTTPS).
+Step 3.4: The Integration Test
+* Scenario: Trigger a webhook in the Bun API that sends data to the n8n container, processes it, and returns a result.
+* Monitoring: Use docker stats or Netdata to watch resource consumption during the workflow.
+________________
+
+
+📝 Definition of Done
+1. Phase 2: You can SSH into your server, and the Bun API is running as a background service accessible via IP.
+2. Phase 3: You can visit https://workflows.yourdomain.com, log into n8n, and create a workflow that talks to your Bun API.
