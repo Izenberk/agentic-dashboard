@@ -6,58 +6,49 @@ const app = new Elysia()
     .use(cors())
     .get("/", () => "Hello from the Agentic Dashboard!")
 
-    // N8N Webhook Receiver
-    .post("/api/webhook/:workflowId", async ({ params, body }) => {
-        const { workflowId } = params;
-        const data = body as { status: string; logs?: string[] };
-        const runId = crypto.randomUUID();
-
-        console.log(`📥 Webhook received for ${workflowId}`);
-
-        try {
-            // 1. Auto-register workflow if it doesn't exist
-            await db.execute({
-                sql: "INSERT OR IGNORE INTO workflows (id, name) VALUES (?,?)",
-                args: [workflowId, `Auto-Workflow-${workflowId.substring(0, 4)}`]
-            });
-
-            // 2. Record the Run
-            await db.execute({
-                sql: "INSERT INTO runs (id, workflow_id, status, completed_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
-                args: [runId, workflowId, data.status || 'completed']
-            });
-
-            // 3. Record Logs
-            if (data.logs && Array.isArray(data.logs)) {
-                for (const log of data.logs) {
-                    await db.execute({
-                        sql: "INSERT INTO logs (run_id, message) VALUES (?,?)",
-                        args: [runId, log]
-                    });
-                }
-            }
-
-            return { success: true, runId };
-        } catch (error) {
-            console.error(error);
-            return { success: false, error: "Database error" };
-        }
+    // 1. GET /api/metrics - Fetch data for the charts
+    .get("/api/metrics", async () => {
+        const result = await db.execute("SELECT * FROM metrics ORDER BY timestamp ASC");
+        return result.rows;
     })
 
-    // GET /api/runs - Fetch recent runs
-    .get("/api/runs", async () => {
-        const result = await db.execute(`
-            SELECT
-                runs.id,
-                runs.status,
-                runs.completed_at,
-                workflows.name as workflow_name
-            FROM runs
-            JOIN workflows ON runs.workflow_id = workflows.id
-            ORDER BY runs.created_at DESC
-            LIMIT 50    
-        `);
-        return result.rows;
+    // 2. POST /api/chat - User asks a question
+    .post("/api/chat", async ({ body }) => {
+        const { prompt } = body as { prompt: string };
+
+        // Log the question to DB
+        const result = await db.execute({
+            sql: "INSERT INTO insights (prompt) VALUES (?) RETURNING id",
+            args: [prompt]
+        });
+
+        const firstRow = result.rows?.[0];
+
+        if (!firstRow) {
+            return { success: false, error: "Failed to create insight" };
+        }
+        // Type assertion because LibSQL returns unknown[]
+        const insightId = (firstRow as unknown as { id: number }).id;
+
+        return { success: true, insightId };
+    })
+
+    // 3. POST /api/chat/webhook - n8n returns the answer
+    .post("/api/chat/webhook", async ({ body }) => {
+        const { insightId, answer } = body as { insightId: number, answer: string };
+
+        await db.execute({
+            sql: "UPDATE insights SET answer = ? WHERE id = ?",
+            args: [answer, insightId]
+        });
+
+        return { success: true };
+    })
+
+    // 4. GET /api/chat/history - Fetch conversation
+    .get("/api/chat/history", async () => {
+        const result = await db.execute("SELECT * FROM insights ORDER BY created_at DESC");
+        return result.rows as unknown as { id: number; prompt: string; answer: string | null; created_at: string }[];
     })
 
     .listen(3000);
