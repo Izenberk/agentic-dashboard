@@ -1,14 +1,14 @@
-import React from "react";
+// RunTable component - currently unused but kept for future use
 
 interface Run {
-    id: string;
-    workflow_name: string;
-    status: 'pending' | 'completed' | 'failed';
-    completed_at: string;
+  id: string;
+  workflow_name: string;
+  status: 'pending' | 'completed' | 'failed';
+  completed_at: string;
 }
 
 export function RunTable({ runs }: { runs: Run[] }) {
-    return (
+  return (
     <div className="overflow-hidden rounded-lg border border-slate-200">
       <table className="min-w-full divide-y divide-slate-200 bg-white">
         <thead className="bg-slate-50">
