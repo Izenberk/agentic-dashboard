@@ -30,6 +30,16 @@ const app = new Elysia()
         // Type assertion because LibSQL returns unknown[]
         const insightId = (firstRow as unknown as { id: number }).id;
 
+        // Trigger n8n workflow (fire and forget)
+        const n8nUrl = process.env.N8N_WEBHOOK_URL;
+        if (n8nUrl) {
+            fetch(n8nUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt, insightId })
+            }).catch(err => console.error("Failed to trigger n8n:", err));
+        }
+
         return { success: true, insightId };
     })
 
