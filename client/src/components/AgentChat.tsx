@@ -48,7 +48,7 @@ export function AgentChat() {
             </div>
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
-                {insights.map((insight) => (
+                {[...insights].reverse().map((insight) => (
                     <div key={insight.id} className="space-y-2">
                         {/* User Question */}
                         <div className="flex justify-end">
