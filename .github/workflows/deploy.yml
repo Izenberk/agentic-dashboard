@@ -15,8 +15,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            export PATH=$PATH:/home/agentic/.bun/bin
             cd /var/www/agentic-dashboard
             git pull origin main
             bun install
             cd client && bun run build && cd ..
-            sudo systemctl restart agent-dashboard
+            sudo -n systemctl restart agent-dashboard || echo "Note: Restart requires manual intervention"
