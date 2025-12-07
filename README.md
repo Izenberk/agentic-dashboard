@@ -1,68 +1,184 @@
 # The Smart Analyst 🕵️‍♂️📊
 
-> **Vision**: A Data Analytics Dashboard empowered by Agentic AI.
+> **A Full-Stack Data Analytics Dashboard with AI-Powered Insights**
 
-## 🌟 The Concept
-It's not just about *seeing* the data; it's about *understanding* it.
-We are building a dashboard where you can talk to your data.
--   **Visuals**: Beautiful charts showing key metrics.
--   **Intelligence**: An embedded AI Agent (n8n) that explains the "Why" behind the numbers.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://72-62-67-226.nip.io)
+[![CI/CD](https://github.com/Izenberk/agentic-dashboard/actions/workflows/deploy.yml/badge.svg)](https://github.com/Izenberk/agentic-dashboard/actions)
 
-## 🏎️ The Tech Stack
-We prioritized **Developer Experience (DX)**, **Performance**, and **Type Safety**.
+## 🎯 Project Overview
 
--   **Runtime:** [Bun](https://bun.com) 🥟
--   **Backend:** [ElysiaJS](https://elysiajs.com) 🦊
--   **Frontend:** [React](https://react.dev) + [Vite](https://vitejs.dev) ⚡
--   **Database:** [Turso](https://turso.tech) / LibSQL 💽
--   **Styling:** [Tailwind CSS v3](https://tailwindcss.com) 🎨
--   **Automation:** [n8n](https://n8n.io) 🤖
+A production-ready analytics dashboard where users can **visualize data** and **chat with an AI analyst**. This project demonstrates:
+
+- **Full-Stack Development** (React + Bun/Elysia)
+- **AI Integration** (n8n + Google Gemini)
+- **DevOps & Deployment** (Bare Metal VPS, Nginx, Systemd, CI/CD)
+- **Modern Tooling** (TypeScript, Tailwind, Turso)
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 📊 **Interactive Charts** | Real-time metrics visualization with Recharts |
+| 🤖 **AI Chat Interface** | Ask questions about your data, get intelligent responses |
+| 🔄 **CI/CD Pipeline** | Auto-deploy on push via GitHub Actions |
+| 🔒 **Production Security** | SSL, SSH keys, UFW firewall |
+| ⚡ **High Performance** | Bun runtime, edge database |
+
+## �️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Production Stack                          │
+├─────────────────────────────────────────────────────────────────┤
+│  Client (React + Vite)           │  Hosted via Nginx             │
+│  ├── Dashboard with Charts       │  ├── SSL/TLS (Certbot)        │
+│  └── AI Chat Interface           │  └── Reverse Proxy            │
+├──────────────────────────────────┼───────────────────────────────┤
+│  API Server (Bun + Elysia)       │  n8n Workflow Engine          │
+│  ├── /api/metrics                │  ├── Webhook Trigger          │
+│  ├── /api/chat                   │  ├── Google Gemini LLM        │
+│  ├── /api/chat/webhook           │  └── Response Callback        │
+│  └── /health                     │                               │
+├──────────────────────────────────┴───────────────────────────────┤
+│  Database: Turso (LibSQL)        │  Hosted on Turso Cloud        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Why |
+|-------|------------|-----|
+| **Runtime** | [Bun](https://bun.sh) | Fast startup, native TypeScript |
+| **Backend** | [ElysiaJS](https://elysiajs.com) | Type-safe, high performance |
+| **Frontend** | [React](https://react.dev) + [Vite](https://vitejs.dev) | Fast HMR, modern tooling |
+| **Database** | [Turso](https://turso.tech) | Edge-replicated SQLite |
+| **Styling** | [Tailwind CSS](https://tailwindcss.com) | Utility-first, rapid UI |
+| **AI Workflow** | [n8n](https://n8n.io) | Visual workflow automation |
+| **LLM** | Google Gemini | Fast, capable, free tier |
+| **Deployment** | Ubuntu VPS + Nginx | Bare metal for learning |
+| **CI/CD** | GitHub Actions | Auto-deploy on push |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
--   [Bun](https://bun.com) installed.
+- [Bun](https://bun.sh) installed
+- [Turso CLI](https://docs.turso.tech/cli/installation) (for production)
 
-### Installation
+### Local Development
+
 ```bash
-# 1. Clone & Install
+# Clone the repo
+git clone https://github.com/Izenberk/agentic-dashboard.git
+cd agentic-dashboard
+
+# Install dependencies
 bun install
 
-# 2. Setup Database
+# Setup local database
 bun run server/scripts/migrate.ts
-```
+bun run server/scripts/seed.ts
 
-### Running Development Mode
-**Terminal 1 (Backend):**
-```bash
+# Start backend (Terminal 1)
 bun run server/src/index.ts
+
+# Start frontend (Terminal 2)
+cd client && bun run dev
 ```
 
-**Terminal 2 (Frontend):**
+Visit `http://localhost:5173`
+
+## � Project Structure
+
+```
+agentic-dashboard/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   │   ├── MetricChart.tsx
+│   │   │   └── AgentChat.tsx
+│   │   ├── lib/api.ts      # Type-safe API client
+│   │   └── App.tsx
+│   └── dist/               # Production build
+├── server/
+│   ├── src/
+│   │   ├── index.ts        # Elysia API server
+│   │   ├── db.ts           # Database connection
+│   │   └── schema.sql      # Database schema
+│   ├── scripts/
+│   │   ├── migrate.ts      # Schema migration
+│   │   └── seed.ts         # Sample data
+│   └── n8n_workflows/      # n8n workflow exports
+├── .github/workflows/
+│   └── deploy.yml          # CI/CD pipeline
+└── README.md
+```
+
+## 🔄 How It Works
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant A as API
+    participant N as n8n
+    participant G as Gemini AI
+
+    U->>F: Types question
+    F->>A: POST /api/chat
+    A->>A: Save to DB (pending)
+    A->>N: Trigger webhook
+    N->>G: Send prompt
+    G->>N: Return answer
+    N->>A: POST /api/chat/webhook
+    A->>A: Update DB (answered)
+    F->>A: Polls /api/chat/history
+    A->>F: Returns updated insights
+    F->>U: Displays AI answer
+```
+
+## 🏰 Production Deployment
+
+Deployed on **Hostinger VPS** using a "Bare Metal" approach:
+
+| Component | Implementation |
+|-----------|----------------|
+| **OS** | Ubuntu 24.04 LTS |
+| **Reverse Proxy** | Nginx (SSL via Certbot) |
+| **App Server** | Bun as Systemd service |
+| **n8n** | Docker container |
+| **Database** | Turso Cloud |
+| **CI/CD** | GitHub Actions SSH deploy |
+
+### Security Measures
+- ✅ Root login disabled
+- ✅ SSH key-only authentication
+- ✅ UFW firewall (ports 22, 80, 443 only)
+- ✅ HTTPS everywhere (Let's Encrypt)
+
+## 📊 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check (uptime, status) |
+| `/api/metrics` | GET | Fetch all metrics data |
+| `/api/chat` | POST | Submit a question |
+| `/api/chat/webhook` | POST | Callback from n8n |
+| `/api/chat/history` | GET | Get all insights |
+
+## 🧪 Testing
+
 ```bash
-bun run dev --cwd client
+# Health check
+curl https://72-62-67-226.nip.io/health
+
+# Get metrics
+curl https://72-62-67-226.nip.io/api/metrics
 ```
 
-## 🔄 How it Works
-1.  **The Dashboard** fetches metrics from the database and renders charts.
-2.  **The User** asks a question ("Why is sales down?").
-3.  **The Server** forwards this to an **n8n Workflow**.
-4.  **The Agent** analyzes the raw data and returns a textual insight.
-5.  **The UI** displays the AI's answer alongside the charts.
+## 📝 License
 
-## 🏰 Production Deployment ("The Server Architect")
+MIT
 
-We use a **Bare Metal** strategy on a Linux VPS (Hostinger KVM) to practice fundamental DevOps skills.
+---
 
-### Architecture
--   **Hardware**: Ubuntu 24.04 VPS (4GB RAM).
--   **Reverse Proxy**: Nginx (handling SSL & Routing).
-    -   `dashboard.yourdomain.com` -> `localhost:3000` (Bun App)
-    -   `n8n.yourdomain.com` -> `localhost:5678` (n8n Docker)
--   **Application**:
-    -   **Bun**: Runs as a native `systemd` service for maximum performance.
-    -   **n8n**: Runs in **Docker** for ease of maintenance.
--   **Security**:
-    -   Root login disabled.
-    -   SSH Keys only.
-    -   UFW Firewall restricted to ports 22, 80, 443.
+Built with ❤️ as a learning project to master full-stack development and DevOps.

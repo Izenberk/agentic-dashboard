@@ -6,6 +6,13 @@ const app = new Elysia()
     .use(cors())
     .get("/", () => "Hello from the Agentic Dashboard!")
 
+    // Health check
+    .get("/health", () => ({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    }))
+
     // 1. GET /api/metrics - Fetch data for the charts
     .get("/api/metrics", async () => {
         const result = await db.execute("SELECT * FROM metrics ORDER BY timestamp ASC");
