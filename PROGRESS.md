@@ -29,12 +29,16 @@
 | Dec 7, 2025 | CI/CD Pipeline | ✅ |
 | Dec 7, 2025 | Health endpoint | ✅ |
 
-### Phase 6: Product Enhancement (Planned 📋)
-- [ ] 6.0 User Management (Auth)
-- [ ] 6.1 Dark Mode
-- [ ] 6.2 Responsive Design
-- [ ] 6.3 CSV Import
-- [ ] 6.4 Export Charts as PNG
+### Phase 6: Product Enhancement (In Progress 🔧)
+| Date | Task | Status |
+|------|------|--------|
+| Dec 14, 2025 | 6.0 Backend Auth (JWT) | ✅ |
+| Dec 14, 2025 | 6.0 Frontend Auth (Login/Register) | ✅ |
+| - | 6.0 Data isolation (user_id) | ⏳ |
+| - | 6.1 Dark Mode | ⬜ |
+| - | 6.2 Responsive Design | ⬜ |
+| - | 6.3 CSV Import | ⬜ |
+| - | 6.4 Export Charts | ⬜ |
 
 ---
 

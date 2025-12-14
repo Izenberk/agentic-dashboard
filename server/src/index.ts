@@ -1,9 +1,23 @@
 import Elysia from "elysia";
 import cors from "@elysiajs/cors";
+import jwt from "@elysiajs/jwt";
+import { hash, compare } from "bcryptjs";
 import { db } from "./db";
+
+// Helper to extract user ID from JWT
+async function getUserId(authHeader: string | undefined, jwtVerify: (token: string) => Promise<any>): Promise<number | null> {
+    if (!authHeader?.startsWith("Bearer ")) return null;
+    const token = authHeader.slice(7);
+    const payload = await jwtVerify(token);
+    return payload?.id || null;
+}
 
 const app = new Elysia()
     .use(cors())
+    .use(jwt({
+        name: 'jwt',
+        secret: process.env.JWT_SECRET || 'dev-secret-change-in-production'
+    }))
     .get("/", () => "Hello from the Agentic Dashboard!")
 
     // Health check
@@ -13,28 +27,94 @@ const app = new Elysia()
         uptime: process.uptime()
     }))
 
-    // 1. GET /api/metrics - Fetch data for the charts
-    .get("/api/metrics", async () => {
-        const result = await db.execute("SELECT * FROM metrics ORDER BY timestamp ASC");
+    // Auth: Register
+    .post("/api/auth/register", async ({ body, set }) => {
+        const { email, password } = body as { email: string; password: string };
+        const passwordHash = await hash(password, 10);
+
+        try {
+            await db.execute({
+                sql: "INSERT INTO users (email, password_hash) VALUES (?, ?)",
+                args: [email, passwordHash]
+            });
+            return { success: true, message: "User registered" };
+        } catch (error) {
+            set.status = 400;
+            return { success: false, error: "Email already exists" };
+        }
+    })
+
+    // Auth: Login
+    .post("/api/auth/login", async ({ body, jwt, set }) => {
+        const { email, password } = body as { email: string; password: string };
+
+        const result = await db.execute({
+            sql: "SELECT * FROM users WHERE email = ?",
+            args: [email]
+        });
+
+        const user = result.rows?.[0] as unknown as { id: number; password_hash: string } | undefined;
+
+        if (!user) {
+            set.status = 401;
+            return { success: false, error: "Invalid email or password" };
+        }
+
+        const validPassword = await compare(password, user.password_hash);
+        if (!validPassword) {
+            set.status = 401;
+            return { success: false, error: "Invalid email or password" };
+        }
+
+        const token = await jwt.sign({ id: user.id });
+        return { success: true, token };
+    })
+
+    // Auth: Me (Get Current User)
+    .get("/api/auth/me", async ({ jwt, headers, set }) => {
+        const userId = await getUserId(headers.authorization, jwt.verify);
+        if (!userId) {
+            set.status = 401;
+            return { success: false, error: "Invalid token" };
+        }
+        return { success: true, userId };
+    })
+
+    // GET /api/metrics - Fetch user's data for charts
+    .get("/api/metrics", async ({ jwt, headers, set }) => {
+        const userId = await getUserId(headers.authorization, jwt.verify);
+        if (!userId) {
+            set.status = 401;
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const result = await db.execute({
+            sql: "SELECT * FROM metrics WHERE user_id = ? ORDER BY timestamp ASC",
+            args: [userId]
+        });
         return result.rows;
     })
 
-    // 2. POST /api/chat - User asks a question
-    .post("/api/chat", async ({ body }) => {
+    // POST /api/chat - User asks a question
+    .post("/api/chat", async ({ body, jwt, headers, set }) => {
+        const userId = await getUserId(headers.authorization, jwt.verify);
+        if (!userId) {
+            set.status = 401;
+            return { success: false, error: "Unauthorized" };
+        }
+
         const { prompt } = body as { prompt: string };
 
-        // Log the question to DB
         const result = await db.execute({
-            sql: "INSERT INTO insights (prompt) VALUES (?) RETURNING id",
-            args: [prompt]
+            sql: "INSERT INTO insights (user_id, prompt) VALUES (?, ?) RETURNING id",
+            args: [userId, prompt]
         });
 
         const firstRow = result.rows?.[0];
-
         if (!firstRow) {
             return { success: false, error: "Failed to create insight" };
         }
-        // Type assertion because LibSQL returns unknown[]
+
         const insightId = (firstRow as unknown as { id: number }).id;
 
         // Trigger n8n workflow (fire and forget)
@@ -50,7 +130,7 @@ const app = new Elysia()
         return { success: true, insightId };
     })
 
-    // 3. POST /api/chat/webhook - n8n returns the answer
+    // POST /api/chat/webhook - n8n returns the answer (no auth - internal)
     .post("/api/chat/webhook", async ({ body }) => {
         const { insightId, answer } = body as { insightId: number, answer: string };
 
@@ -62,10 +142,19 @@ const app = new Elysia()
         return { success: true };
     })
 
-    // 4. GET /api/chat/history - Fetch conversation
-    .get("/api/chat/history", async () => {
-        const result = await db.execute("SELECT * FROM insights ORDER BY created_at DESC");
-        return result.rows as unknown as { id: number; prompt: string; answer: string | null; created_at: string }[];
+    // GET /api/chat/history - Fetch user's conversation
+    .get("/api/chat/history", async ({ jwt, headers, set }) => {
+        const userId = await getUserId(headers.authorization, jwt.verify);
+        if (!userId) {
+            set.status = 401;
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const result = await db.execute({
+            sql: "SELECT * FROM insights WHERE user_id = ? ORDER BY created_at DESC",
+            args: [userId]
+        });
+        return result.rows;
     })
 
     .listen(3000);

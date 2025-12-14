@@ -9,6 +9,11 @@ interface Insight {
     created_at: string;
 }
 
+function getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return token ? { authorization: `Bearer ${token}` } : {};
+}
+
 export function AgentChat() {
     const [input, setInput] = useState('');
     const [insights, setInsights] = useState<Insight[]>([]);
@@ -17,9 +22,10 @@ export function AgentChat() {
     // Poll for updates
     useEffect(() => {
         const fetchHistory = () => {
-            if (api.api.chat) {
-                api.api.chat.history.get().then(({ data }) => {
-                    if (data) setInsights(data);
+            const headers = getAuthHeaders();
+            if (api.api.chat && headers.authorization) {
+                api.api.chat.history.get({ headers }).then(({ data }) => {
+                    if (Array.isArray(data)) setInsights(data);
                 });
             }
         };
@@ -33,9 +39,11 @@ export function AgentChat() {
         e.preventDefault();
         if (!input.trim()) return;
 
+        const headers = getAuthHeaders();
+        if (!headers.authorization) return;
+
         setLoading(true);
-        // Optimistic UI could go here, but let's keep it simple
-        await api.api.chat.post({ prompt: input });
+        await api.api.chat.post({ prompt: input }, { headers });
         setInput('');
         setLoading(false);
     };
