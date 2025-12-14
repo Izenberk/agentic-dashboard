@@ -22,5 +22,5 @@ jobs:
             bun install
             cd server && bun install && cd ..
             bun run server/scripts/migrate.ts || true
-            cd client && bun run build && cd ..
+            cd client && bun install && bun run build && cd ..
             sudo -n systemctl restart agent-dashboard || echo "Note: Restart requires manual intervention"
