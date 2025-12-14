@@ -25,7 +25,7 @@ export function AgentChat() {
             const headers = getAuthHeaders();
             if (api.api.chat && headers.authorization) {
                 api.api.chat.history.get({ headers }).then(({ data }) => {
-                    if (Array.isArray(data)) setInsights(data);
+                    if (Array.isArray(data)) setInsights(data as unknown as Insight[]);
                 });
             }
         };
