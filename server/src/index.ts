@@ -66,7 +66,10 @@ const app = new Elysia()
             return { success: false, error: "Invalid email or password" };
         }
 
-        const token = await jwt.sign({ id: user.id });
+        const token = await jwt.sign({
+            id: user.id,
+            exp: Math.floor(Date.now() / 1000) + (1 * 24 * 60 * 60)
+        });
         return { success: true, token };
     })
 
