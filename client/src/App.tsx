@@ -4,6 +4,7 @@ import { api } from './lib/api';
 import { MetricChart } from './components/MetricChart';
 import { AgentChat } from './components/AgentChat';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import { ThemeProvider } from './lib/ThemeContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { DashboardLayout } from './components/DashboardLayout';
@@ -52,17 +53,19 @@ function Dashboard() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Dashboard />} />
-        </Route>
-      </Routes>
-    </AuthProvider>
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Dashboard />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
