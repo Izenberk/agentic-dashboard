@@ -98,6 +98,37 @@ const app = new Elysia()
         return result.rows;
     })
 
+    // POST /api/metrics/import - Bulk import from CSV
+    .post("/api/metrics/import", async ({ body, jwt, headers, set }) => {
+        const userId = await getUserId(headers.authorization, jwt.verify);
+        if (!userId) {
+            set.status = 401;
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const { rows } = body as { rows: { label: string; value: number; timestamp: string }[] };
+
+        if (!rows || !Array.isArray(rows) || rows.length === 0) {
+            set.status = 400;
+            return { success: false, error: "No data provided" }
+        }
+
+        // Bulk insert
+        let imported = 0;
+        for (const row of rows) {
+            if (row.label && row.value !== undefined && row.timestamp) {
+                await db.execute({
+                    sql: "INSERT INTO metrics (user_id, label, value, timestamp) VALUES (?, ?, ?, ?)",
+                    args: [userId, row.label, Number(row.value), row.timestamp]
+                });
+                imported++;
+            }
+        }
+
+        return { success: true, imported };
+    })
+
+
     // POST /api/chat - User asks a question
     .post("/api/chat", async ({ body, jwt, headers, set }) => {
         const userId = await getUserId(headers.authorization, jwt.verify);

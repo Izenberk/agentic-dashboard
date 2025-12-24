@@ -8,6 +8,7 @@ import { ThemeProvider } from './lib/ThemeContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { DashboardLayout } from './components/DashboardLayout';
+import { CsvUpload } from './components/CsvUpload';
 
 // Protected Route Component
 function ProtectedRoute() {
@@ -19,6 +20,11 @@ function ProtectedRoute() {
 // Dashboard Page Component
 function Dashboard() {
   const [metrics, setMetrics] = useState<any[]>([])
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleImportComplete = () => {
+    setRefreshKey(prev => prev + 1)
+  }
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,7 +35,7 @@ function Dashboard() {
         if (Array.isArray(data)) setMetrics(data);
       });
     }
-  }, []);
+  }, [refreshKey]);
 
   const salesData = metrics.filter(m => m.label === 'Sales');
   const visitorData = metrics.filter(m => m.label === 'Visitors');
@@ -45,6 +51,7 @@ function Dashboard() {
         {/* Agent Insight */}
         <div className="grid grid-cols-1 gap-8">
           <AgentChat />
+          <CsvUpload onImportComplete={handleImportComplete} />
         </div>
       </div>
     </DashboardLayout>
