@@ -20,6 +20,11 @@ A production-ready analytics dashboard where users can **visualize data** and **
 |---------|-------------|
 | 📊 **Interactive Charts** | Real-time metrics visualization with Recharts |
 | 🤖 **AI Chat Interface** | Ask questions about your data, get intelligent responses |
+| 🔐 **User Authentication** | JWT-based auth with secure password hashing |
+| 🌙 **Dark Mode** | Toggle between light/dark themes with localStorage persistence |
+| 📱 **Responsive Design** | Mobile-friendly with collapsible sidebar |
+| 📁 **CSV Import** | Upload your own data via CSV files |
+| 📸 **Chart Export** | Download charts as PNG or PDF |
 | 🔄 **CI/CD Pipeline** | Auto-deploy on push via GitHub Actions |
 | 🔒 **Production Security** | SSL, SSH keys, UFW firewall |
 | ⚡ **High Performance** | Bun runtime, edge database |
@@ -94,9 +99,14 @@ agentic-dashboard/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # React components
-│   │   │   ├── MetricChart.tsx
-│   │   │   └── AgentChat.tsx
-│   │   ├── lib/api.ts      # Type-safe API client
+│   │   │   ├── MetricChart.tsx      # Charts with export
+│   │   │   ├── AgentChat.tsx        # AI chat interface
+│   │   │   ├── CsvUpload.tsx        # CSV import
+│   │   │   └── DashboardLayout.tsx  # Responsive layout
+│   │   ├── lib/
+│   │   │   ├── api.ts           # Type-safe API client
+│   │   │   ├── AuthContext.tsx  # JWT auth context
+│   │   │   └── ThemeContext.tsx # Dark mode context
 │   │   └── App.tsx
 │   └── dist/               # Production build
 ├── server/
@@ -160,7 +170,11 @@ Deployed on **Hostinger VPS** using a "Bare Metal" approach:
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Health check (uptime, status) |
+| `/api/auth/register` | POST | Create new user account |
+| `/api/auth/login` | POST | Authenticate and get JWT |
+| `/api/auth/me` | GET | Get current user info |
 | `/api/metrics` | GET | Fetch all metrics data |
+| `/api/metrics/import` | POST | Bulk import metrics from CSV |
 | `/api/chat` | POST | Submit a question |
 | `/api/chat/webhook` | POST | Callback from n8n |
 | `/api/chat/history` | GET | Get all insights |
