@@ -41,7 +41,7 @@ export function CsvUpload({ onImportComplete }: { onImportComplete: () => void }
 
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/api/metrics/import', {
+            const response = await fetch('/api/metrics/import', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export function CsvUpload({ onImportComplete }: { onImportComplete: () => void }
                 onImportComplete();
             } else {
                 setError(data.error || 'Import failed');
-            } 
+            }
         } catch (err) {
             setError('Connection failed');
         } finally {
