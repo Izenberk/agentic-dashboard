@@ -14,13 +14,11 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 60s
+          timeout: 300s
           script: |
-            export PATH=$PATH:/home/agentic/.bun/bin
             cd /var/www/agentic-dashboard
             git pull origin main
-            bun install
-            cd server && bun install && cd ..
-            bun run server/scripts/migrate.ts || true
-            cd client && bun install && bun run build && cd ..
-            sudo -n systemctl restart agent-dashboard || echo "Note: Restart requires manual intervention"
+            docker compose down
+            docker compose build --no-cache
+            docker compose up -d
+            echo "✅ Deployment complete!"

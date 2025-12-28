@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@server/*": ["../../server/src/*"]
+    },
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true
+  },
+  "include": ["src"]
+}

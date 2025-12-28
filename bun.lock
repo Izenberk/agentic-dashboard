@@ -15,6 +15,7 @@
       "name": "client",
       "version": "0.0.0",
       "dependencies": {
+        "@agentic/shared-types": "workspace:*",
         "@elysiajs/eden": "^1.4.5",
         "html-to-image": "^1.11.13",
         "jspdf": "^3.0.4",
@@ -44,6 +45,13 @@
         "vite": "^7.2.4",
       },
     },
+    "packages/shared-types": {
+      "name": "@agentic/shared-types",
+      "version": "1.0.0",
+      "dependencies": {
+        "elysia": "*",
+      },
+    },
     "server": {
       "name": "server",
       "dependencies": {
@@ -64,6 +72,8 @@
     },
   },
   "packages": {
+    "@agentic/shared-types": ["@agentic/shared-types@workspace:packages/shared-types"],
+
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.27.1", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.27.1", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg=="],

@@ -1,0 +1,25 @@
+services:
+  # Backend API
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
+      - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+    restart: unless-stopped
+
+  # Frontend
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+        - "80:80"
+    depends_on:
+      - server
+    restart: unless-stopped

@@ -1,8 +1,31 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import cors from "@elysiajs/cors";
 import jwt from "@elysiajs/jwt";
 import { hash, compare } from "bcryptjs";
 import { db } from "./db";
+
+// Request validation schemas
+const AuthBody = t.Object({
+    email: t.String({ format: "email" }),
+    password: t.String({ minLength: 6 })
+})
+
+const MetricsImportBody = t.Object({
+    rows: t.Array(t.Object({
+        label: t.String(),
+        value: t.Number(),
+        timestamp: t.String()
+    }))
+});
+
+const WebhookBody = t.Object({
+    insightId: t.Number(),
+    answer: t.String()
+});
+
+const ChatBody = t.Object({
+    prompt: t.String({ minLength: 1 })
+})
 
 // Helper to extract user ID from JWT
 async function getUserId(authHeader: string | undefined, jwtVerify: (token: string) => Promise<any>): Promise<number | null> {
@@ -42,7 +65,7 @@ const app = new Elysia()
             set.status = 400;
             return { success: false, error: "Email already exists" };
         }
-    })
+    }, { body: AuthBody })
 
     // Auth: Login
     .post("/api/auth/login", async ({ body, jwt, set }) => {
@@ -71,7 +94,7 @@ const app = new Elysia()
             exp: Math.floor(Date.now() / 1000) + (1 * 24 * 60 * 60)
         });
         return { success: true, token };
-    })
+    }, { body: AuthBody })
 
     // Auth: Me (Get Current User)
     .get("/api/auth/me", async ({ jwt, headers, set }) => {
@@ -126,7 +149,7 @@ const app = new Elysia()
         }
 
         return { success: true, imported };
-    })
+    }, { body: MetricsImportBody })
 
 
     // POST /api/chat - User asks a question
@@ -162,7 +185,7 @@ const app = new Elysia()
         }
 
         return { success: true, insightId };
-    })
+    }, { body: ChatBody })
 
     // POST /api/chat/webhook - n8n returns the answer (no auth - internal)
     .post("/api/chat/webhook", async ({ body }) => {
@@ -174,7 +197,7 @@ const app = new Elysia()
         });
 
         return { success: true };
-    })
+    }, { body: WebhookBody })
 
     // GET /api/chat/history - Fetch user's conversation
     .get("/api/chat/history", async ({ jwt, headers, set }) => {
