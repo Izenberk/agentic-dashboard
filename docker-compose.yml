@@ -1,11 +1,32 @@
 services:
+  # Traefik - Reverse Proxy with SSL
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirect HTTP to HTTPS
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    restart: unless-stopped
+
   # Backend API
   server:
     build:
       context: .
       dockerfile: server/Dockerfile
-    ports:
-      - "3000:3000"
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
@@ -18,8 +39,15 @@ services:
     build:
       context: .
       dockerfile: client/Dockerfile
-    ports:
-        - "80:80"
     depends_on:
       - server
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.client.entrypoints=websecure"
+      - "traefik.http.routers.client.tls.certresolver=letsencrypt"
+      - "traefik.http.services.client.loadbalancer.server.port=80"
     restart: unless-stopped
+
+volumes:
+  letsencrypt:
