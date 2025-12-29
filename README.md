@@ -2,8 +2,9 @@
 
 > **A Full-Stack Data Analytics Dashboard with AI-Powered Insights**
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://72-62-67-226.nip.io)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](http://smart-analyst.72-62-67-226.nip.io)
 [![CI/CD](https://github.com/Izenberk/agentic-dashboard/actions/workflows/deploy.yml/badge.svg)](https://github.com/Izenberk/agentic-dashboard/actions)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-blue)](./docker-compose.yml)
 
 ## 🎯 Project Overview
 
@@ -29,23 +30,22 @@ A production-ready analytics dashboard where users can **visualize data** and **
 | 🔒 **Production Security** | SSL, SSH keys, UFW firewall |
 | ⚡ **High Performance** | Bun runtime, edge database |
 
-## �️ Architecture
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Production Stack                          │
+│                     Production Stack (Docker)                    │
 ├─────────────────────────────────────────────────────────────────┤
-│  Client (React + Vite)           │  Hosted via Nginx             │
-│  ├── Dashboard with Charts       │  ├── SSL/TLS (Certbot)        │
-│  └── AI Chat Interface           │  └── Reverse Proxy            │
-├──────────────────────────────────┼───────────────────────────────┤
-│  API Server (Bun + Elysia)       │  n8n Workflow Engine          │
-│  ├── /api/metrics                │  ├── Webhook Trigger          │
-│  ├── /api/chat                   │  ├── Google Gemini LLM        │
-│  ├── /api/chat/webhook           │  └── Response Callback        │
-│  └── /health                     │                               │
-├──────────────────────────────────┴───────────────────────────────┤
-│  Database: Turso (LibSQL)        │  Hosted on Turso Cloud        │
+│  System Nginx (SSL)          →  Docker Client (port 8080)        │
+│  ├── Let's Encrypt             ├── Nginx serving React SPA      │
+│  └── Reverse Proxy             └── Proxies /api to Server       │
+├──────────────────────────────────────────────────────────────────┤
+│  Docker Server (port 3000)   │  n8n Workflow Engine             │
+│  ├── Bun + ElysiaJS API      │  ├── Webhook Trigger             │
+│  ├── TypeBox validation      │  ├── Google Gemini LLM           │
+│  └── JWT authentication      │  └── Response Callback           │
+├──────────────────────────────────────────────────────────────────┤
+│  Database: Turso (LibSQL)    │  Hosted on Turso Cloud           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -92,6 +92,15 @@ cd client && bun run dev
 
 Visit `http://localhost:5173`
 
+### Docker Development
+
+```bash
+# Run with Docker (recommended)
+docker compose up
+```
+
+Visit `http://localhost` (port 80)
+
 ## � Project Structure
 
 ```
@@ -99,25 +108,21 @@ agentic-dashboard/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # React components
-│   │   │   ├── MetricChart.tsx      # Charts with export
-│   │   │   ├── AgentChat.tsx        # AI chat interface
-│   │   │   ├── CsvUpload.tsx        # CSV import
-│   │   │   └── DashboardLayout.tsx  # Responsive layout
-│   │   ├── lib/
-│   │   │   ├── api.ts           # Type-safe API client
-│   │   │   ├── AuthContext.tsx  # JWT auth context
-│   │   │   └── ThemeContext.tsx # Dark mode context
-│   │   └── App.tsx
-│   └── dist/               # Production build
+│   │   └── lib/            # API client, contexts
+│   ├── Dockerfile          # Multi-stage build
+│   └── nginx.conf          # SPA routing + API proxy
 ├── server/
 │   ├── src/
 │   │   ├── index.ts        # Elysia API server
-│   │   ├── db.ts           # Database connection
-│   │   └── schema.sql      # Database schema
+│   │   └── schema-v2.sql   # Multi-tenant schema
 │   ├── scripts/
-│   │   ├── migrate.ts      # Schema migration
-│   │   └── seed.ts         # Sample data
-│   └── n8n_workflows/      # n8n workflow exports
+│   │   └── migrate-v2.ts   # Schema migration
+│   └── Dockerfile          # Bun multi-stage build
+├── packages/
+│   └── shared-types/       # @agentic/shared-types
+│       └── src/index.ts    # Re-exports App type
+├── docker-compose.yml      # Container orchestration
+├── nginx-vps.conf          # VPS Nginx template
 ├── .github/workflows/
 │   └── deploy.yml          # CI/CD pipeline
 └── README.md
@@ -148,16 +153,18 @@ sequenceDiagram
 
 ## 🏰 Production Deployment
 
-Deployed on **Hostinger VPS** using a "Bare Metal" approach:
+Deployed on **Hostinger VPS** using Docker:
 
 | Component | Implementation |
 |-----------|----------------|
 | **OS** | Ubuntu 24.04 LTS |
-| **Reverse Proxy** | Nginx (SSL via Certbot) |
-| **App Server** | Bun as Systemd service |
+| **Containers** | Docker Compose |
+| **Reverse Proxy** | System Nginx (SSL via Certbot) |
+| **Frontend** | Docker (Nginx:8080) |
+| **Backend** | Docker (Bun:3000) |
 | **n8n** | Docker container |
 | **Database** | Turso Cloud |
-| **CI/CD** | GitHub Actions SSH deploy |
+| **CI/CD** | GitHub Actions → Docker Compose |
 
 ### Security Measures
 - ✅ Root login disabled
@@ -183,10 +190,10 @@ Deployed on **Hostinger VPS** using a "Bare Metal" approach:
 
 ```bash
 # Health check
-curl https://72-62-67-226.nip.io/health
+curl http://smart-analyst.72-62-67-226.nip.io/health
 
-# Get metrics
-curl https://72-62-67-226.nip.io/api/metrics
+# Get metrics (requires auth)
+curl http://smart-analyst.72-62-67-226.nip.io/api/metrics
 ```
 
 ## 📝 License
